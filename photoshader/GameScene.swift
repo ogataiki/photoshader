@@ -19,6 +19,7 @@ class GameScene: SKScene {
         self.addChild(myLabel)
     }
     
+    var count = 0;
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
        /* Called when a touch begins */
         
@@ -31,11 +32,14 @@ class GameScene: SKScene {
             sprite.yScale = 0.5
             sprite.position = location
             
-            let action = SKAction.rotateByAngle(CGFloat(M_PI), duration:1)
-            
-            sprite.runAction(SKAction.repeatActionForever(action))
+            if(count%2 == 0) {
+                let shader = SKShader(fileNamed: "shader.fsh")
+                sprite.shader = shader;
+            }
             
             self.addChild(sprite)
+            
+            count += 1;
         }
     }
    
