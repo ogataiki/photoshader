@@ -1,5 +1,6 @@
 void main() {
-    /*
+
+    /* 波紋
     // 中心からの位置を求める
     vec2 uv = v_tex_coord - vec2(0.5, 0.5);
     float len = length(uv);
@@ -17,34 +18,53 @@ void main() {
 
     vec4 color = texture2D(u_texture, v_tex_coord).rgba;
     
-    float size_w = u_sprite_size.x;
-    float size_h = u_sprite_size.y;
+    // ---
+    // ガウスフィルタ
+    // u_sprite_size がバグってるらしい。。。
+    //float x_flag = 1.0 / u_sprite_size.x;
+    //float y_flag = 1.0 / u_sprite_size.y;
+    float x_flag = 0.005;
+    float y_flag = 0.005;
 
-    float px = v_tex_coord.x * size_w;
-    float py = v_tex_coord.y * size_h;
-    vec2 p;
-    p = vec2((px-1.0) / size_w, (py-1.0) / size_h);
-    vec4 c1 = texture2D(u_texture, p);
-    p = vec2((px) / size_w, (py-1.0) / size_h);
-    vec4 c2 = texture2D(u_texture, p);
-    p = vec2((px+1.0) / size_w, (py-1.0) / size_h);
-    vec4 c3 = texture2D(u_texture, p);
-    p = vec2((px-1.0) / size_w, (py) / size_h);
-    vec4 c4 = texture2D(u_texture, p);
-    p = vec2((px+1.0) / size_w, (py) / size_h);
-    vec4 c5 = texture2D(u_texture, p);
-    p = vec2((px-1.0) / size_w, (py+1.0) / size_h);
-    vec4 c6 = texture2D(u_texture, p);
-    p = vec2((px) / size_w, (py+1.0) / size_h);
-    vec4 c7 = texture2D(u_texture, p);
-    p = vec2((px+1.0) / size_w, (py+1.0) / size_h);
-    vec4 c8 = texture2D(u_texture, p);
+    float px = v_tex_coord.x;
+    float py = v_tex_coord.y;
     
-    float tmp_r = (color.r+c1.r+c2.r+c3.r+c4.r+c5.r+c6.r+c7.r+c8.r)*0.11;
-    float tmp_g = (color.g+c1.g+c2.g+c3.g+c4.g+c5.g+c6.g+c7.g+c8.g)*0.11;
-    float tmp_b = (color.b+c1.b+c2.b+c3.b+c4.b+c5.b+c6.b+c7.b+c8.b)*0.11;
+    vec3 destColor = color.rgb * 0.36;
     
-    color = vec4(tmp_r, tmp_g, tmp_b, color.a);
+    destColor += texture2D(u_texture, vec2(px - x_flag, py - y_flag)).rgb * 0.04;
+    destColor += texture2D(u_texture, vec2(px         , py - y_flag)).rgb * 0.04;
+    destColor += texture2D(u_texture, vec2(px + x_flag, py - y_flag)).rgb * 0.04;
+    destColor += texture2D(u_texture, vec2(px - x_flag, py         )).rgb * 0.04;
+    destColor += texture2D(u_texture, vec2(px + x_flag, py         )).rgb * 0.04;
+    destColor += texture2D(u_texture, vec2(px - x_flag, py + y_flag)).rgb * 0.04;
+    destColor += texture2D(u_texture, vec2(px         , py + y_flag)).rgb * 0.04;
+    destColor += texture2D(u_texture, vec2(px + x_flag, py + y_flag)).rgb * 0.04;
+    
+    destColor += texture2D(u_texture, vec2(px - (x_flag*2.0), py - (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px - (x_flag*1.0), py - (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px               , py - (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px + (x_flag*1.0), py - (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px + (x_flag*2.0), py - (y_flag*2.0))).rgb * 0.02;
+    
+    destColor += texture2D(u_texture, vec2(px - (x_flag*2.0), py - y_flag)).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px + (x_flag*2.0), py - y_flag)).rgb * 0.02;
+
+    destColor += texture2D(u_texture, vec2(px - (x_flag*2.0), py         )).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px + (x_flag*2.0), py         )).rgb * 0.02;
+    
+    destColor += texture2D(u_texture, vec2(px - (x_flag*2.0), py + y_flag)).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px + (x_flag*2.0), py + y_flag)).rgb * 0.02;
+    
+    destColor += texture2D(u_texture, vec2(px - (x_flag*2.0), py + (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px - (x_flag*1.0), py + (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px               , py + (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px + (x_flag*1.0), py + (y_flag*2.0))).rgb * 0.02;
+    destColor += texture2D(u_texture, vec2(px + (x_flag*2.0), py + (y_flag*2.0))).rgb * 0.02;
+    
+    color = vec4(destColor.r, destColor.g, destColor.b, color.a);
+    
+    // ---
+    // 輝度ベースのポスタライズ
     
     // 色合計
     float total_c = color.r + color.g + color.b;
@@ -53,6 +73,7 @@ void main() {
     // 0.299×R ＋ 0.587×G ＋ 0.114×B
     // 輝度算出
     float br = 0.299*color.r + 0.587*color.g + 0.114*color.b;
+    
     
     if(total_c <= 0.0) {
         gl_FragColor = vec4(0, 0, 0, color.a);
@@ -64,13 +85,14 @@ void main() {
     }
     
     // 輝度を丸める
+    float unit = 1.0 / 255.0;
     float ret_br = 0.0;
-    if(br < 0.0 * 0.00392) { ret_br = 0.0 * 0.00392; }
-    else if(br < 48.0 * 0.00392) { ret_br = 0.0 * 0.00392; }
-    else if(br < 86.0 * 0.00392) { ret_br = 48.0 * 0.00392; }
-    else if(br < 192.0 * 0.00392) { ret_br = 162.0 * 0.00392; }
-    else if(br < 236.0 * 0.00392) { ret_br = 236.0 * 0.00392; }
-    else if(br < 256.0 * 0.00392) { ret_br = 255.0 * 0.00392; }
+    if(br < 0.0 * unit) { ret_br = 0.0 * unit; }
+    else if(br < 12.0 * unit) { ret_br = 0.0 * unit; }
+    else if(br < 32.0 * unit) { ret_br = 12.0 * unit; }
+    else if(br < 192.0 * unit) { ret_br = 162.0 * unit; }
+    else if(br < 236.0 * unit) { ret_br = 236.0 * unit; }
+    else if(br < 256.0 * unit) { ret_br = 255.0 * unit; }
     
     // 変換結果の色合計 = 変換結果の輝度 * 元の色合計 / 元の輝度
     float ret_total_c = ret_br * total_c / br;
