@@ -23,8 +23,10 @@ void main() {
     // u_sprite_size がバグってるらしい。。。
     //float x_flag = 1.0 / u_sprite_size.x;
     //float y_flag = 1.0 / u_sprite_size.y;
-    float x_flag = 0.005;
-    float y_flag = 0.005;
+    //float x_flag = 0.005;
+    //float y_flag = 0.005;
+    float x_flag = 1.0 / sprite_size.x;
+    float y_flag = 1.0 / sprite_size.y;
 
     float px = v_tex_coord.x;
     float py = v_tex_coord.y;
@@ -111,5 +113,29 @@ void main() {
     if(ret_g > 1.0) { ret_g = 1.0; }
     if(ret_b > 1.0) { ret_b = 1.0; }
 
-    gl_FragColor = vec4(ret_r, ret_g, ret_b, color.a);
+    vec4 horizEdge = vec4( 0.0 );
+    horizEdge -= texture2D( u_texture, vec2( px - x_flag, py - y_flag ) ) * 1.0;
+    horizEdge -= texture2D( u_texture, vec2( px - x_flag, py          ) ) * 2.0;
+    horizEdge -= texture2D( u_texture, vec2( px - x_flag, py + y_flag ) ) * 1.0;
+    horizEdge += texture2D( u_texture, vec2( px + x_flag, py - y_flag ) ) * 1.0;
+    horizEdge += texture2D( u_texture, vec2( px + x_flag, py          ) ) * 2.0;
+    horizEdge += texture2D( u_texture, vec2( px + x_flag, py + y_flag ) ) * 1.0;
+    vec4 vertEdge = vec4( 0.0 );
+    vertEdge -= texture2D( u_texture, vec2( px - x_flag, py - y_flag ) ) * 1.0;
+    vertEdge -= texture2D( u_texture, vec2( px         , py - y_flag ) ) * 2.0;
+    vertEdge -= texture2D( u_texture, vec2( px + x_flag, py - y_flag ) ) * 1.0;
+    vertEdge += texture2D( u_texture, vec2( px - x_flag, py + y_flag ) ) * 1.0;
+    vertEdge += texture2D( u_texture, vec2( px         , py + y_flag ) ) * 2.0;
+    vertEdge += texture2D( u_texture, vec2( px + x_flag, py + y_flag ) ) * 1.0;
+    vec3 edge = sqrt((horizEdge.rgb * horizEdge.rgb) + (vertEdge.rgb * vertEdge.rgb));
+    
+    // 輝度算出
+    float edge_br = 0.299*edge.r + 0.587*edge.g + 0.114*edge.b;
+    
+    if(edge_br > 186.0 * unit) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, color.a);
+    }
+    else {
+        gl_FragColor = vec4(ret_r, ret_g, ret_b, color.a);
+    }
 }
